@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vota la Maglia Migliore</title>
+    <!-- Tailwind CSS per la grafica -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans antialiased flex flex-col items-center justify-center min-h-screen p-4">
+
+    <h1 class="text-3xl font-bold mb-6 text-center">Quale maglia vince?</h1>
+
+    <!-- Questa sezione scompare dopo il voto -->
+    <div id="sezione-voto" class="w-full max-w-md space-y-6">
+        
+        <!-- OPZIONE 1 -->
+        <button onclick="vota('magliaA')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold p-4 rounded-xl text-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
+            <!-- DA CAMBIARE: Nome dell'immagine della prima maglia -->
+            <img src="magliaA.jpg" alt="Maglia A" class="w-full h-48 object-cover rounded-lg mb-3 shadow-md bg-white">
+            <!-- DA CAMBIARE: Testo del bottone -->
+            Maglia A
+        </button>
+        
+        <div class="text-center font-bold text-gray-400 text-2xl">VS</div>
+
+        <!-- OPZIONE 2 -->
+        <button onclick="vota('magliaB')" class="w-full bg-white hover:bg-gray-200 text-black font-bold p-4 rounded-xl text-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
+            <!-- DA CAMBIARE: Nome dell'immagine della seconda maglia -->
+            <img src="magliaB.jpg" alt="Maglia B" class="w-full h-48 object-cover rounded-lg mb-3 shadow-md bg-gray-100">
+            <!-- DA CAMBIARE: Testo del bottone -->
+            Maglia B
+        </button>
+    </div>
+
+    <!-- Messaggio di Successo -->
+    <div id="messaggio" class="mt-8 text-xl font-semibold text-green-400 hidden text-center border-2 border-green-500 p-6 rounded-xl bg-gray-800 w-full max-w-md shadow-lg">
+        ✅ Voto registrato con successo!<br>
+        <span class="text-sm text-gray-300 font-normal mt-2 block">Guarda i risultati in diretta sulla live.</span>
+    </div>
+
+    <!-- Messaggio di Errore -->
+    <div id="errore" class="mt-8 text-lg font-semibold text-red-400 hidden text-center">
+        ⚠️ Hai già votato per questa sfida!
+    </div>
+
+    <script>
+        // DA CAMBIARE: Cambia questo numero ogni volta che fai una nuova sfida (es. sfida_2, sfida_3)
+        const idSfida = "sfida_1";
+
+        // INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPj0Y50dVDqmZP7pt2Z7C9vCb9Hu0H7nU",
+            authDomain: "voti-maglie-ed402.firebaseapp.com",
+            databaseURL: "https://voti-maglie-ed402-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "voti-maglie-ed402",
+            storageBucket: "voti-maglie-ed402.firebasestorage.app",
+            messagingSenderId: "1022463104245",
+            appId: "1:1022463104245:web:06731438f1ac9c0cf5a1bc
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // Controllo se ha già votato
+        window.onload = function() {
+            if (localStorage.getItem('votato_' + idSfida)) {
+                document.getElementById('sezione-voto').classList.add('hidden');
+                document.getElementById('messaggio').classList.remove('hidden');
+            }
+        };
+
+        // Funzione di registrazione voto
+        function vota(maglia) {
+            if (localStorage.getItem('votato_' + idSfida)) {
+                document.getElementById('errore').classList.remove('hidden');
+                return; 
+            }
+
+            const ref = db.ref('sondaggio/' + maglia);
+            ref.transaction((votiAttuali) => {
+                return (votiAttuali || 0) + 1;
+            });
+
+            localStorage.setItem('votato_' + idSfida, 'true');
+
+            document.getElementById('sezione-voto').classList.add('hidden');
+            document.getElementById('errore').classList.add('hidden');
+            document.getElementById('messaggio').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
