@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Regia Voti - Milan Vibes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-800 text-white p-10 flex flex-col items-center min-h-screen justify-center">
+    
+    <h1 class="text-4xl font-bold mb-8 text-center text-red-500">Regia Live - Milan Vibes</h1>
+    
+    <div class="bg-gray-900 p-10 rounded-2xl shadow-2xl border-2 border-gray-700 text-center max-w-lg w-full">
+        <p class="mb-8 text-gray-300 text-lg">Usa questo pulsante per azzerare il tabellone su vMix quando passi a una nuova sfida.</p>
+        
+        <button onclick="resetVoti()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-6 px-8 rounded-xl text-2xl shadow-lg transition-transform transform hover:scale-105 uppercase tracking-wider">
+            🔄 Azzera Voti in Diretta
+        </button>
+        
+        <div id="conferma" class="mt-8 text-green-400 font-bold hidden text-2xl bg-gray-800 py-4 rounded-lg border border-green-500">
+            ✅ Tabellone Azzerato!
+        </div>
+    </div>
+
+    <script>
+        // INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE
+        const firebaseConfig = {
+            apiKey: "LA_TUA_API_KEY",
+            authDomain: "IL_TUO_PROGETTO.firebaseapp.com",
+            databaseURL: "https://IL_TUO_PROGETTO-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "IL_TUO_PROGETTO",
+            storageBucket: "IL_TUO_PROGETTO.appspot.com",
+            messagingSenderId: "ID",
+            appId: "APP_ID"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        function resetVoti() {
+            // Questo comando forza il database a impostare i voti a zero
+            db.ref('sondaggio').set({
+                magliaA: 0,
+                magliaB: 0
+            }).then(() => {
+                // Mostra il messaggio di conferma
+                document.getElementById('conferma').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('conferma').classList.add('hidden');
+                }, 3000);
+            }).catch((error) => {
+                console.error("Errore durante il reset:", error);
+                alert("Errore! Controlla la connessione.");
+            });
+        }
+    </script>
+</body>
+</html>
