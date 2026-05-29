@@ -15,6 +15,11 @@
 </head>
 <body class="w-[1920px] h-[1080px] relative">
 
+    <!-- RADAR DIAGNOSTICO (Per individuare l'errore in tempo reale) -->
+    <div id="stato-connessione" class="absolute top-4 left-4 bg-black p-4 rounded-xl text-xl font-bold z-50 border-2 border-yellow-500 text-white shadow-lg">
+        ⏳ Connessione a Firebase in corso...
+    </div>
+
     <!-- Contenitore del sondaggio posizionato in basso a destra -->
     <div class="absolute bottom-16 right-16 w-[500px] bg-black/80 rounded-2xl p-6 shadow-2xl border-2 border-gray-700">
         <h2 class="text-white text-2xl font-bold text-center mb-6 uppercase tracking-wider">Risultati in Diretta</h2>
@@ -47,7 +52,7 @@
     </div>
 
     <script>
-        // INCOLLA QUI LA STESSA CONFIGURAZIONE FIREBASE
+        // INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAPj0Y50dVDqmZP7pt2Z7C9vCb9Hu0H7nU",
             authDomain: "voti-maglie-ed402.firebaseapp.com",
@@ -55,13 +60,27 @@
             projectId: "voti-maglie-ed402",
             storageBucket: "voti-maglie-ed402.firebasestorage.app",
             messagingSenderId: "1022463104245",
-            appId: "1:1022463104245:web:06731438f1ac9c0cf5a1bc"
+            appId: "G-27G1QXTRTK"
         };
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const stato = document.getElementById('stato-connessione');
 
-        // Ascolta le modifiche in tempo reale
+        // Test Connessione di Rete (Verifica se Firebase risponde)
+        db.ref('.info/connected').on('value', function(snap) {
+            if (snap.val() === true) {
+                stato.innerHTML = "🟢 Connesso a Firebase! In attesa dei voti...";
+                stato.classList.replace('border-yellow-500', 'border-green-500');
+                stato.classList.replace('border-red-500', 'border-green-500');
+            } else {
+                stato.innerHTML = "🔴 Rete disconnessa (Verifica il link databaseURL)";
+                stato.classList.replace('border-yellow-500', 'border-red-500');
+                stato.classList.replace('border-green-500', 'border-red-500');
+            }
+        });
+
+        // Ascolta le modifiche e intercetta gli errori di Permesso
         db.ref('sondaggio').on('value', (snapshot) => {
             const dati = snapshot.val() || {};
             const votiA = dati.magliaA || 0;
@@ -74,9 +93,12 @@
             if (totale > 0) {
                 percA = Math.round((votiA / totale) * 100);
                 percB = Math.round((votiB / totale) * 100);
+                
+                // Nasconde il radar se tutto funziona e sono arrivati voti
+                stato.style.display = 'none'; 
             }
 
-            // Aggiorna l'interfaccia grafica in modo fluido
+            // Aggiorna l'interfaccia grafica
             document.getElementById('barra-A').style.width = percA + '%';
             document.getElementById('perc-A').innerText = percA + '%';
             
@@ -84,6 +106,12 @@
             document.getElementById('perc-B').innerText = percB + '%';
 
             document.getElementById('voti-totali').innerText = totale;
+        }, (error) => {
+            // Se c'è un blocco di sicurezza nel database, lo stampa qui
+            stato.innerHTML = "❌ ERRORE: " + error.message;
+            stato.classList.replace('border-yellow-500', 'border-red-500');
+            stato.classList.replace('border-green-500', 'border-red-500');
+            stato.style.display = 'block'; 
         });
     </script>
 </body>
