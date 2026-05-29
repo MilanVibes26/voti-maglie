@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Overlay vMix Sondaggio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* Sfondo verde per il Chroma Key di vMix */
+        body { background-color: #00FF00; overflow: hidden; margin: 0; padding: 0; }
+        .barra-transizione { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="w-[1920px] h-[1080px] relative">
+
+    <!-- Contenitore del sondaggio posizionato in basso a destra -->
+    <div class="absolute bottom-16 right-16 w-[500px] bg-black/80 rounded-2xl p-6 shadow-2xl border-2 border-gray-700">
+        <h2 class="text-white text-2xl font-bold text-center mb-6 uppercase tracking-wider">Risultati in Diretta</h2>
+
+        <!-- Risultato Maglia A -->
+        <div class="mb-4">
+            <div class="flex justify-between text-white font-bold mb-1 text-lg">
+                <span>Maglia A</span>
+                <span id="perc-A">0%</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-8 overflow-hidden">
+                <div id="barra-A" class="bg-red-600 h-8 rounded-full barra-transizione w-0 text-right pr-2 text-white font-bold leading-8 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4)]"></div>
+            </div>
+        </div>
+
+        <!-- Risultato Maglia B -->
+        <div class="mb-2">
+            <div class="flex justify-between text-white font-bold mb-1 text-lg">
+                <span>Maglia B</span>
+                <span id="perc-B">0%</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-8 overflow-hidden">
+                <div id="barra-B" class="bg-white h-8 rounded-full barra-transizione w-0 text-right pr-2 text-black font-bold leading-8 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4)]"></div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <span class="text-gray-400 text-sm font-bold">Voti totali: <span id="voti-totali">0</span></span>
+        </div>
+    </div>
+
+    <script>
+        // INCOLLA QUI LA STESSA CONFIGURAZIONE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAPj0Y50dVDqmZP7pt2Z7C9vCb9Hu0H7nU",
+            authDomain: "voti-maglie-ed402.firebaseapp.com",
+            databaseURL: "https://voti-maglie-ed402-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "voti-maglie-ed402",
+            storageBucket: "voti-maglie-ed402.firebasestorage.app",
+            messagingSenderId: "1022463104245",
+            appId: "1:1022463104245:web:06731438f1ac9c0cf5a1bc"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Ascolta le modifiche in tempo reale
+        db.ref('sondaggio').on('value', (snapshot) => {
+            const dati = snapshot.val() || {};
+            const votiA = dati.magliaA || 0;
+            const votiB = dati.magliaB || 0;
+            const totale = votiA + votiB;
+
+            let percA = 0;
+            let percB = 0;
+
+            if (totale > 0) {
+                percA = Math.round((votiA / totale) * 100);
+                percB = Math.round((votiB / totale) * 100);
+            }
+
+            // Aggiorna l'interfaccia grafica in modo fluido
+            document.getElementById('barra-A').style.width = percA + '%';
+            document.getElementById('perc-A').innerText = percA + '%';
+            
+            document.getElementById('barra-B').style.width = percB + '%';
+            document.getElementById('perc-B').innerText = percB + '%';
+
+            document.getElementById('voti-totali').innerText = totale;
+        });
+    </script>
+</body>
+</html>
