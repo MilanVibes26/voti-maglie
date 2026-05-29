@@ -3,57 +3,52 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Overlay vMix Sondaggio</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vota la Maglia Migliore</title>
+    <!-- Tailwind CSS per la grafica -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        /* Sfondo verde per il Chroma Key di vMix */
-        body { background-color: #00FF00; overflow: hidden; margin: 0; padding: 0; }
-        .barra-transizione { transition: width 0.5s ease-in-out; }
-    </style>
 </head>
-<body class="w-[1920px] h-[1080px] relative">
+<body class="bg-gray-900 text-white font-sans antialiased flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- RADAR DIAGNOSTICO -->
-    <div id="stato-connessione" class="absolute top-4 left-4 bg-black p-4 rounded-xl text-xl font-bold z-50 border-2 border-yellow-500 text-white shadow-lg">
-        ⏳ Connessione a Firebase in corso...
+    <h1 class="text-3xl font-bold mb-6 text-center">Quale maglia vince?</h1>
+
+    <!-- Questa sezione scompare dopo il voto -->
+    <div id="sezione-voto" class="w-full max-w-md space-y-6">
+        
+        <!-- OPZIONE 1 -->
+        <button onclick="vota('magliaA')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold p-4 rounded-xl text-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
+            <img src="MagliaA.jpg" alt="Maglia A" class="w-full h-48 object-cover rounded-lg mb-3 shadow-md bg-white">
+            Maglia A
+        </button>
+        
+        <div class="text-center font-bold text-gray-400 text-2xl">VS</div>
+
+        <!-- OPZIONE 2 -->
+        <button onclick="vota('magliaB')" class="w-full bg-white hover:bg-gray-200 text-black font-bold p-4 rounded-xl text-xl shadow-lg transition-transform transform hover:scale-105 flex flex-col items-center">
+            <img src="MagliaB.jpg" alt="Maglia B" class="w-full h-48 object-cover rounded-lg mb-3 shadow-md bg-gray-100">
+            Maglia B
+        </button>
     </div>
 
-    <!-- Contenitore del sondaggio posizionato in basso a destra -->
-    <div class="absolute bottom-16 right-16 w-[500px] bg-black/80 rounded-2xl p-6 shadow-2xl border-2 border-gray-700">
-        <h2 class="text-white text-2xl font-bold text-center mb-6 uppercase tracking-wider">Risultati in Diretta</h2>
+    <!-- Messaggio di Successo -->
+    <div id="messaggio" class="mt-8 text-xl font-semibold text-green-400 hidden text-center border-2 border-green-500 p-6 rounded-xl bg-gray-800 w-full max-w-md shadow-lg">
+        ✅ Voto registrato con successo!<br>
+        <span class="text-sm text-gray-300 font-normal mt-2 block">Guarda i risultati in diretta sulla live.</span>
+    </div>
 
-        <!-- Risultato Maglia A -->
-        <div class="mb-4">
-            <div class="flex justify-between text-white font-bold mb-1 text-lg">
-                <span>Maglia A</span>
-                <span id="perc-A">0%</span>
-            </div>
-            <div class="w-full bg-gray-800 rounded-full h-8 overflow-hidden">
-                <div id="barra-A" class="bg-red-600 h-8 rounded-full barra-transizione w-0 text-right pr-2 text-white font-bold leading-8 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4)]"></div>
-            </div>
-        </div>
-
-        <!-- Risultato Maglia B -->
-        <div class="mb-2">
-            <div class="flex justify-between text-white font-bold mb-1 text-lg">
-                <span>Maglia B</span>
-                <span id="perc-B">0%</span>
-            </div>
-            <div class="w-full bg-gray-800 rounded-full h-8 overflow-hidden">
-                <div id="barra-B" class="bg-white h-8 rounded-full barra-transizione w-0 text-right pr-2 text-black font-bold leading-8 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.4)]"></div>
-            </div>
-        </div>
-        
-        <div class="text-center mt-4">
-            <span class="text-gray-400 text-sm font-bold">Voti totali: <span id="voti-totali">0</span></span>
-        </div>
+    <!-- Messaggio di Errore -->
+    <div id="errore" class="mt-8 text-lg font-semibold text-red-400 hidden text-center">
+        ⚠️ Hai già votato per questa sfida!
     </div>
 
     <script>
-        // LA TUA CONFIGURAZIONE CORRETTA E VERIFICATA
+        // DA CAMBIARE: Cambia questo numero ogni volta che fai una nuova sfida
+        const idSfida = "sfida_1";
+
+        // CONFIGURAZIONE FIREBASE CORRETTA
         const firebaseConfig = {
             apiKey: "AIzaSyAPj0Y50dVDqmZP7pt2Z7C9vCb9Hu0H7nU",
             authDomain: "voti-maglie-ed402.firebaseapp.com",
@@ -64,55 +59,37 @@
             appId: "1:1022463104245:web:06731438f1ac9c0cf5a1bc"
         };
         
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database();
-        const stato = document.getElementById('stato-connessione');
 
-        // Test Connessione di Rete
-        db.ref('.info/connected').on('value', function(snap) {
-            if (snap.val() === true) {
-                stato.innerHTML = "🟢 Connesso a Firebase! In attesa dei voti...";
-                stato.classList.replace('border-yellow-500', 'border-green-500');
-                stato.classList.replace('border-red-500', 'border-green-500');
-            } else {
-                stato.innerHTML = "🔴 Rete disconnessa (Verifica il link databaseURL)";
-                stato.classList.replace('border-yellow-500', 'border-red-500');
-                stato.classList.replace('border-green-500', 'border-red-500');
+        // Controllo se ha già votato
+        window.onload = function() {
+            if (localStorage.getItem('votato_' + idSfida)) {
+                document.getElementById('sezione-voto').classList.add('hidden');
+                document.getElementById('messaggio').classList.remove('hidden');
             }
-        });
+        };
 
-        // Ascolta le modifiche in tempo reale
-        db.ref('sondaggio').on('value', (snapshot) => {
-            const dati = snapshot.val() || {};
-            const votiA = dati.magliaA || 0;
-            const votiB = dati.magliaB || 0;
-            const totale = votiA + votiB;
-
-            let percA = 0;
-            let percB = 0;
-
-            if (totale > 0) {
-                percA = Math.round((votiA / totale) * 100);
-                percB = Math.round((votiB / totale) * 100);
-                
-                // Nasconde il radar se tutto funziona e sono arrivati voti
-                stato.style.display = 'none'; 
+        // Funzione di registrazione voto
+        function vota(maglia) {
+            if (localStorage.getItem('votato_' + idSfida)) {
+                document.getElementById('errore').classList.remove('hidden');
+                return; 
             }
 
-            // Aggiorna l'interfaccia grafica
-            document.getElementById('barra-A').style.width = percA + '%';
-            document.getElementById('perc-A').innerText = percA + '%';
-            
-            document.getElementById('barra-B').style.width = percB + '%';
-            document.getElementById('perc-B').innerText = percB + '%';
+            const ref = db.ref('sondaggio/' + maglia);
+            ref.transaction((votiAttuali) => {
+                return (votiAttuali || 0) + 1;
+            });
 
-            document.getElementById('voti-totali').innerText = totale;
-        }, (error) => {
-            stato.innerHTML = "❌ ERRORE: " + error.message;
-            stato.classList.replace('border-yellow-500', 'border-red-500');
-            stato.classList.replace('border-green-500', 'border-red-500');
-            stato.style.display = 'block'; 
-        });
+            localStorage.setItem('votato_' + idSfida, 'true');
+
+            document.getElementById('sezione-voto').classList.add('hidden');
+            document.getElementById('errore').classList.add('hidden');
+            document.getElementById('messaggio').classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
