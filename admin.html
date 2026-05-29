@@ -18,21 +18,27 @@
             🔄 Azzera Voti in Diretta
         </button>
         
+        <!-- Messaggio di Successo -->
         <div id="conferma" class="mt-8 text-green-400 font-bold hidden text-2xl bg-gray-800 py-4 rounded-lg border border-green-500">
             ✅ Tabellone Azzerato!
+        </div>
+
+        <!-- Messaggio di Errore -->
+        <div id="errore-admin" class="mt-8 text-red-400 font-bold hidden text-lg bg-gray-800 py-4 rounded-lg border border-red-500 break-words">
+            ❌ Errore di connessione!
         </div>
     </div>
 
     <script>
-        // INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE
+        // LE CHIAVI DEFINITIVE E VERIFICATE
         const firebaseConfig = {
-            apiKey: "LA_TUA_API_KEY",
-            authDomain: "IL_TUO_PROGETTO.firebaseapp.com",
-            databaseURL: "https://IL_TUO_PROGETTO-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "IL_TUO_PROGETTO",
-            storageBucket: "IL_TUO_PROGETTO.appspot.com",
-            messagingSenderId: "ID",
-            appId: "APP_ID"
+            apiKey: "AIzaSyAPj0Y50dVDqmZP7pt2Z7C9vCb9Hu0H7nU",
+            authDomain: "voti-maglie-ed402.firebaseapp.com",
+            databaseURL: "https://voti-maglie-ed402-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "voti-maglie-ed402",
+            storageBucket: "voti-maglie-ed402.firebasestorage.app",
+            messagingSenderId: "1022463104245",
+            appId: "1:1022463104245:web:06731438f1ac9c0cf5a1bc"
         };
         
         if (!firebase.apps.length) {
@@ -46,14 +52,20 @@
                 magliaA: 0,
                 magliaB: 0
             }).then(() => {
-                // Mostra il messaggio di conferma
+                // Mostra il messaggio di conferma e nasconde eventuali errori
                 document.getElementById('conferma').classList.remove('hidden');
+                document.getElementById('errore-admin').classList.add('hidden');
+                
+                // Fa scomparire la notifica verde dopo 3 secondi
                 setTimeout(() => {
                     document.getElementById('conferma').classList.add('hidden');
                 }, 3000);
             }).catch((error) => {
+                // Se qualcosa va storto, stampa l'errore esatto a schermo
                 console.error("Errore durante il reset:", error);
-                alert("Errore! Controlla la connessione.");
+                document.getElementById('errore-admin').innerText = "❌ Errore: " + error.message;
+                document.getElementById('errore-admin').classList.remove('hidden');
+                document.getElementById('conferma').classList.add('hidden');
             });
         }
     </script>
